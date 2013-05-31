@@ -1,0 +1,31 @@
+user nginx;
+worker_processes 1;
+error_log /var/log/nginx/error.log;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    
+    server {
+        listen <%= node['nginx']['port'] %>;
+        root /var/www/project/web;
+        server_name localhost;
+        location ~ \.php$ {
+            fastcgi_pass unix:/var/run/php-fpm/www.sock;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+        }
+        location / {
+            if ( -f $request_filename) {
+                expires max;
+                break;
+            }
+            rewrite ^(.*) /index.php last;
+        }
+    }
+}
